@@ -455,7 +455,7 @@ function ShipmentDetailView({ shipment, detail, tracking, loading, onBack, onRef
           </h1>
         </div>
 
-        <div className="flex items-center shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             size="icon"
             variant="outline"
