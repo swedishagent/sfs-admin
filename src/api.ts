@@ -761,5 +761,5 @@ export async function getShippingLabel(trackingNumber: string): Promise<{ base64
 }
 
 export async function getShippingDocument(trackingNumber: string, docType: string = 'commercial_invoice'): Promise<{ base64: string; format: string }> {
-  return apiRequest(`/api/shipping/document/${trackingNumber}?doc_type=${docType}`);
+  return apiRequest(`/api/shipping/document/${trackingNumber}/${docType}`);
 }
