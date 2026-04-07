@@ -458,7 +458,7 @@ function ShipmentDetailView({ shipment, detail, tracking, loading, onBack, onRef
         <div className="flex items-center gap-1 shrink-0">
           <Button
             size="icon"
-            variant="ghost"
+            variant="outline"
             onClick={openDocs}
             className="h-9 w-9"
             aria-label="Dokument"
