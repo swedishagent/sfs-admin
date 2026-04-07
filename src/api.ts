@@ -757,9 +757,9 @@ export async function voidShipment(trackingNumber: string, orderId?: string): Pr
 }
 
 export async function getShippingLabel(trackingNumber: string): Promise<{ base64: string; format: string }> {
-  return apiRequest(`/api/shipping/label/${trackingNumber}`);
+  return apiRequest(`/api/shipping/json/label/${trackingNumber}`);
 }
 
 export async function getShippingDocument(trackingNumber: string, docType: string = 'commercial_invoice'): Promise<{ base64: string; format: string }> {
-  return apiRequest(`/api/shipping/document/${trackingNumber}/${docType}`);
+  return apiRequest(`/api/shipping/json/document/${trackingNumber}/${docType}`);
 }
