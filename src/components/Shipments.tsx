@@ -437,39 +437,45 @@ function ShipmentDetailView({ shipment, detail, tracking, loading, onBack, onRef
 
   return (
     <div className="space-y-4 pb-20 lg:pb-6">
-      {/* Header row */}
-      <div className="relative flex items-center justify-between">
+      {/* Header row - order number left, actions right */}
+      <div className="flex items-center justify-between">
         <Button
           size="icon"
           variant="ghost"
           onClick={onBack}
-          className="z-10"
+          className="shrink-0"
           aria-label="Tillbaka"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
 
-        <h1 className="absolute inset-0 flex items-center justify-center text-xl font-bold text-[#006aa7] pointer-events-none">
-          #{shipment.order_number}
-        </h1>
+        <div className="flex-1 mx-2 min-w-0">
+          <h1 className="text-lg font-semibold truncate text-[#006aa7]">
+            #{shipment.order_number}
+          </h1>
+        </div>
 
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={onRefresh}
-          disabled={loading}
-          className="z-10"
-          aria-label="Uppdatera"
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-        </Button>
-      </div>
-
-      {/* Documents button */}
-      <div className="flex justify-center">
-        <Button variant="outline" onClick={openDocs} className="gap-2">
-          <FileText className="h-4 w-4" /> Visa dokument
-        </Button>
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={openDocs}
+            className="h-9 w-9"
+            aria-label="Dokument"
+          >
+            <FileText className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={onRefresh}
+            disabled={loading}
+            className="h-9 w-9"
+            aria-label="Uppdatera"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
 
       {loading && !tracking ? (
