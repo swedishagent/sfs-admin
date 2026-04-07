@@ -755,3 +755,11 @@ export async function voidShipment(trackingNumber: string, orderId?: string): Pr
     body: JSON.stringify({ tracking_number: trackingNumber, order_id: orderId })
   });
 }
+
+export async function getShippingLabel(trackingNumber: string): Promise<{ base64: string; format: string }> {
+  return apiRequest(`/api/shipping/label/${trackingNumber}`);
+}
+
+export async function getShippingDocument(trackingNumber: string, docType: string = 'commercial_invoice'): Promise<{ base64: string; format: string }> {
+  return apiRequest(`/api/shipping/document/${trackingNumber}?doc_type=${docType}`);
+}

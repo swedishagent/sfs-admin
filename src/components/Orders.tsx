@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { 
   getOrders, getOrderDetail, updateOrderItemStatus, updateOrderStatus,
   generateShoppingListFromOrders, getEmailsByAddress, getEmailDetail,
-  getOrderShipments
+  getOrderShipments, getShippingLabel, getShippingDocument
 } from '../api'
 import type { Order, OrderDetail, OrderItem, EmailSummary, EmailDetail, OrderShipment } from '../api'
 import { toast } from 'sonner'
@@ -22,7 +22,8 @@ import {
 import {
   RefreshCw, ShoppingCart, ArrowLeft, Check, X, Undo2, Package,
   MapPin, Mail, Phone, Truck, Loader2, Clock, CheckCircle2,
-  PackageX, Inbox, Send, ChevronDown, ChevronUp, Search, SlidersHorizontal
+  PackageX, Inbox, Send, ChevronDown, ChevronUp, Search, SlidersHorizontal,
+  FileText, Download
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import ProductDetail from './ProductDetail'
@@ -55,6 +56,11 @@ function ShippingCard({ order, onOpenShipment }: {
   onOpenShipment?: (trackNumber: string) => void
 }) {
   const [shipments, setShipments] = useState<OrderShipment[]>([])
+  const [showDocs, setShowDocs] = useState(false)
+  const [selectedTrack, setSelectedTrack] = useState<string | null>(null)
+  const [labelData, setLabelData] = useState<{ base64: string; format: string } | null>(null)
+  const [invoiceData, setInvoiceData] = useState<{ base64: string; format: string } | null>(null)
+  const [loadingDocs, setLoadingDocs] = useState(false)
 
   useEffect(() => {
     if (!order.order_id) return
@@ -68,12 +74,33 @@ function ShippingCard({ order, onOpenShipment }: {
     })()
   }, [order.order_id])
 
+  const loadDocs = async (trackNumber: string) => {
+    setLoadingDocs(true)
+    setLabelData(null)
+    setInvoiceData(null)
+    try {
+      const label = await getShippingLabel(trackNumber)
+      setLabelData(label)
+    } catch { /* ignore */ }
+    try {
+      const invoice = await getShippingDocument(trackNumber, 'commercial_invoice')
+      setInvoiceData(invoice)
+    } catch { /* ignore */ }
+    setLoadingDocs(false)
+  }
+
+  const openDocs = (trackNumber: string) => {
+    setSelectedTrack(trackNumber)
+    setShowDocs(true)
+    loadDocs(trackNumber)
+  }
+
   const hasShipments = shipments.length > 0
   const firstTrack = shipments[0]?.track_number
 
   return (
-    <Card
-      className={hasShipments ? 'cursor-pointer hover:shadow-md hover:border-[#006aa7] transition-all' : ''}
+    <>
+    <Card className={hasShipments ? 'cursor-pointer hover:shadow-md hover:border-[#006aa7] transition-all' : ''}
       onClick={() => hasShipments && firstTrack && onOpenShipment?.(firstTrack)}
     >
       <CardHeader className="pb-2 pt-3 sm:pt-6 px-3 sm:px-6">
@@ -119,6 +146,14 @@ function ShippingCard({ order, onOpenShipment }: {
                 <span className="font-mono text-sm font-bold text-[#006aa7]">
                   {s.track_number}
                 </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={(e) => { e.stopPropagation(); openDocs(s.track_number) }}
+                >
+                  <FileText className="h-3 w-3 mr-1" /> Dokument
+                </Button>
                 {getTrackingStatusBadge(s.tracking_status)}
                 {s.delivery_date && (
                   <span className="text-xs text-[#6c757d]">
@@ -133,6 +168,68 @@ function ShippingCard({ order, onOpenShipment }: {
         )}
       </CardContent>
     </Card>
+
+    {/* Documents Dialog */}
+    <Dialog open={showDocs} onOpenChange={setShowDocs}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Fraktdokument</DialogTitle>
+          <DialogDescription>Tracking: {selectedTrack}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          {loadingDocs ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-[#006aa7]" />
+            </div>
+          ) : (
+            <>
+              {labelData && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Fraktsedel</p>
+                  <div className="border rounded-lg overflow-hidden bg-white">
+                    <img
+                      src={`data:image/${labelData.format};base64,${labelData.base64}`}
+                      alt="Fraktsedel"
+                      className="max-w-full h-auto"
+                    />
+                  </div>
+                  <a
+                    href={`data:image/${labelData.format};base64,${labelData.base64}`}
+                    download={`label_${selectedTrack}.${labelData.format}`}
+                    className="inline-flex items-center gap-1 text-sm text-[#006aa7] hover:underline mt-2"
+                  >
+                    <Download className="h-4 w-4" /> Ladda ner
+                  </a>
+                </div>
+              )}
+              {invoiceData && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Tullfaktura</p>
+                  <div className="border rounded-lg overflow-hidden bg-white">
+                    <iframe
+                      src={`data:application/pdf;base64,${invoiceData.base64}`}
+                      className="w-full" style={{ height: 400 }}
+                      title="Tullfaktura"
+                    />
+                  </div>
+                  <a
+                    href={`data:application/pdf;base64,${invoiceData.base64}`}
+                    download={`tullfaktura_${selectedTrack}.pdf`}
+                    className="inline-flex items-center gap-1 text-sm text-[#006aa7] hover:underline mt-2"
+                  >
+                    <Download className="h-4 w-4" /> Ladda ner
+                  </a>
+                </div>
+              )}
+              {!labelData && !invoiceData && (
+                <p className="text-sm text-[#6c757d]">Inga dokument tillgängliga</p>
+              )}
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }
 
