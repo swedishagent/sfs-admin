@@ -451,11 +451,11 @@ function ShipmentDetailView({ shipment, detail, tracking, loading, onBack, onRef
 
         <div className="flex-1 mx-2 min-w-0">
           <h1 className="text-lg font-semibold truncate text-[#006aa7]">
-            #{shipment.order_number}
+            #{shipment.order_number || shipment.order_id || shipment.track_number}
           </h1>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center shrink-0">
           <Button
             size="icon"
             variant="outline"
