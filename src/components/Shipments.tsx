@@ -11,9 +11,6 @@ import {
   ArrowRight, ArrowLeft, Timer, ShoppingBag, Mail, Phone, Search, SlidersHorizontal,
   AlertTriangle, FileText, Download
 } from 'lucide-react'
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle
-} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 
@@ -410,7 +407,7 @@ function ShipmentDetailView({ shipment, detail, tracking, loading, onBack, onRef
     shipment.created_at,
     tracking?.actual_delivery || null
   )
-  const [showDocs, setShowDocs] = useState(false)
+  const [showDocsView, setShowDocsView] = useState(false)
   const [labelData, setLabelData] = useState<{ base64: string; format: string } | null>(null)
   const [invoiceData, setInvoiceData] = useState<{ base64: string; format: string } | null>(null)
   const [loadingDocs, setLoadingDocs] = useState(false)
@@ -431,8 +428,94 @@ function ShipmentDetailView({ shipment, detail, tracking, loading, onBack, onRef
   }
 
   const openDocs = () => {
-    setShowDocs(true)
+    setShowDocsView(true)
     if (!labelData && !invoiceData) loadDocs()
+  }
+
+  if (showDocsView) {
+    return (
+      <div className="space-y-4 pb-20 lg:pb-6">
+        <div className="flex items-center justify-between">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => setShowDocsView(false)}
+            className="shrink-0"
+            aria-label="Tillbaka"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex-1 mx-2 min-w-0">
+            <h1 className="text-lg font-semibold truncate text-[#006aa7]">
+              #{shipment.order_number || shipment.order_id || shipment.track_number}
+            </h1>
+          </div>
+        </div>
+
+        {loadingDocs ? (
+          <div className="flex items-center justify-center py-12">
+            <Spinner size="lg" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {labelData && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Fraktsedel</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="border rounded-lg overflow-hidden bg-white">
+                    <img
+                      src={`data:image/${labelData.format};base64,${labelData.base64}`}
+                      alt="Fraktsedel"
+                      className="max-w-full h-auto"
+                    />
+                  </div>
+                  <a
+                    href={`data:image/${labelData.format};base64,${labelData.base64}`}
+                    download={`label_${shipment.track_number}.${labelData.format}`}
+                    className="inline-flex items-center gap-1 text-sm text-[#006aa7] hover:underline mt-2"
+                  >
+                    <Download className="h-4 w-4" /> Ladda ner
+                  </a>
+                </CardContent>
+              </Card>
+            )}
+            {invoiceData && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Tullfaktura</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="border rounded-lg overflow-hidden bg-white">
+                    <iframe
+                      src={`data:application/pdf;base64,${invoiceData.base64}`}
+                      className="w-full"
+                      style={{ height: 400 }}
+                      title="Tullfaktura"
+                    />
+                  </div>
+                  <a
+                    href={`data:application/pdf;base64,${invoiceData.base64}`}
+                    download={`tullfaktura_${shipment.track_number}.pdf`}
+                    className="inline-flex items-center gap-1 text-sm text-[#006aa7] hover:underline mt-2"
+                  >
+                    <Download className="h-4 w-4" /> Ladda ner
+                  </a>
+                </CardContent>
+              </Card>
+            )}
+            {!labelData && !invoiceData && (
+              <Card>
+                <CardContent className="py-8 text-center text-[#6c757d]">
+                  Inga dokument tillgängliga
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -737,65 +820,6 @@ function ShipmentDetailView({ shipment, detail, tracking, loading, onBack, onRef
         </>
       )}
 
-      {/* Documents Dialog */}
-      <Dialog open={showDocs} onOpenChange={setShowDocs}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Fraktdokument</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {loadingDocs ? (
-              <div className="flex items-center justify-center py-8">
-                <Spinner size="lg" />
-              </div>
-            ) : (
-              <>
-                {labelData && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Fraktsedel</p>
-                    <div className="border rounded-lg overflow-hidden bg-white">
-                      <img
-                        src={`data:image/${labelData.format};base64,${labelData.base64}`}
-                        alt="Fraktsedel"
-                        className="max-w-full h-auto"
-                      />
-                    </div>
-                    <a
-                      href={`data:image/${labelData.format};base64,${labelData.base64}`}
-                      download={`label_${shipment.track_number}.${labelData.format}`}
-                      className="inline-flex items-center gap-1 text-sm text-[#006aa7] hover:underline mt-2"
-                    >
-                      <Download className="h-4 w-4" /> Ladda ner
-                    </a>
-                  </div>
-                )}
-                {invoiceData && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Tullfaktura</p>
-                    <div className="border rounded-lg overflow-hidden bg-white">
-                      <iframe
-                        src={`data:application/pdf;base64,${invoiceData.base64}`}
-                        className="w-full" style={{ height: 400 }}
-                        title="Tullfaktura"
-                      />
-                    </div>
-                    <a
-                      href={`data:application/pdf;base64,${invoiceData.base64}`}
-                      download={`tullfaktura_${shipment.track_number}.pdf`}
-                      className="inline-flex items-center gap-1 text-sm text-[#006aa7] hover:underline mt-2"
-                    >
-                      <Download className="h-4 w-4" /> Ladda ner
-                    </a>
-                  </div>
-                )}
-                {!labelData && !invoiceData && (
-                  <p className="text-sm text-[#6c757d]">Inga dokument tillgängliga</p>
-                )}
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
